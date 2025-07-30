@@ -49,6 +49,21 @@ def load_nfl_games_data(directory):
         df_games['AwayScore'] = df_games['AwayScore'].fillna(0)
         df_games['HomeScore'] = df_games['HomeScore'].fillna(0)
 
+        # --- Date Conversion and Full Date Feature ---
+        if 'Season' in df_games.columns and 'Date' in df_games.columns:
+            # Convert 'Season' to string to concatenate with 'Date'
+            df_games['Season_Str'] = df_games['Season'].astype(str)
+            # Combine 'Season' and 'Date' to create a full date string (e.g., "2017-08-03")
+            # Assuming 'Date' is MM/DD format, we need to add the year.
+            # We'll use a dummy year (e.g., 2000) for games that span across year boundaries
+            # or for preseason games where the date might be in the previous year.
+            # For simplicity, let's assume 'Date' is always within the 'Season' year.
+            df_games['FullDate'] = pd.to_datetime(df_games['Date'] + '/' + df_games['Season_Str'], format='%m/%d/%Y', errors='coerce')
+            df_games.drop(columns=['Season_Str'], inplace=True) # Clean up temporary column
+            print("Added 'FullDate' column by combining 'Season' and 'Date'.")
+        else:
+            print("Warning: 'Season' or 'Date' column missing in nfl_games.csv. Cannot create 'FullDate'.")
+
 
         print("Added 'AwayWinPct' and 'HomeWinPct' features.")
         print("Cleaned 'AwayScore' and 'HomeScore'.")
@@ -76,6 +91,15 @@ def load_nfl_plays_data(directory):
     for file_path in plays_files:
         try:
             df = pd.read_csv(file_path)
+            # --- Date Conversion and Full Date Feature for plays data ---
+            if 'Season' in df.columns and 'Date' in df.columns:
+                df['Season_Str'] = df['Season'].astype(str)
+                df['FullDate'] = pd.to_datetime(df['Date'] + '/' + df['Season_Str'], format='%m/%d/%Y', errors='coerce')
+                df.drop(columns=['Season_Str'], inplace=True)
+                # print(f"  - Added 'FullDate' to {os.path.basename(file_path)}") # Too verbose
+            else:
+                print(f"Warning: 'Season' or 'Date' column missing in {os.path.basename(file_path)}. Cannot create 'FullDate'.")
+
             all_plays_dfs.append(df)
             # Optional: Add a source column to know which file a row came from
             # df['SourceFile'] = os.path.basename(file_path)
@@ -112,7 +136,7 @@ if __name__ == "__main__":
         nfl_plays_df.info()
 
     print("\n\n--- Next Steps ---")
-    print("1. You now have 'nfl_games_df' (with win percentages) and 'nfl_plays_df' loaded.")
+    print("1. You now have 'nfl_games_df' (with win percentages and FullDate) and 'nfl_plays_df' (with FullDate) loaded.")
     print("2. The next crucial step is to **acquire actual betting spread data** for NFL games.")
     print("   Without this, you cannot compare your model's forecasts to find 'value'.")
     print("3. Once you have spread data, we can proceed with more advanced feature engineering")
