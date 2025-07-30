@@ -34,13 +34,14 @@ def load_data(file_path):
     })
 
     # Nur die benötigten Spalten auswählen (jetzt mit den umbenannten Namen)
-    required_columns = ['game_date', 'home_team', 'away_team', 'home_score', 'away_score']
+    # WICHTIG: 'Season' hier hinzufügen, da es für die Datumsumwandlung benötigt wird
+    required_columns = ['Season', 'game_date', 'home_team', 'away_team', 'home_score', 'away_score']
     if not all(col in df.columns for col in required_columns):
         missing_cols = [col for col in required_columns if col not in df.columns]
         st.error(f"Fehler: Die Datei '{file_path}' enthält nicht alle benötigten Spalten nach dem Umbenennen. Fehlend: {missing_cols}")
         st.stop()
 
-    df = df[required_columns] # Nur die relevanten Spalten behalten
+    df = df[required_columns] # Nur die relevanten Spalten behalten, 'Season' ist jetzt dabei
 
     # Sicherstellen, dass die Score-Spalten numerisch sind und fehlende Werte (NaN) handhaben
     df['home_score'] = pd.to_numeric(df['home_score'], errors='coerce')
